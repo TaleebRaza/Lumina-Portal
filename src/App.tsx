@@ -9,6 +9,7 @@ import {
   Eye,
   Plus,
   Trash2,
+  // @ts-ignore
   ChevronRight,
   Briefcase,
   Moon,
@@ -46,7 +47,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app, auth, db;
+let app: any, auth: any, db: any;
+
 try {
   if (USE_FIREBASE && firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
     app = initializeApp(firebaseConfig);
@@ -57,9 +59,29 @@ try {
   console.warn("Firebase init warning:", e);
 }
 
-// --- MISSING COMPONENTS (Fixed) ---
+// --- ANIMATION STYLES ---
+const AnimationStyles = () => (
+  <style>{`
+    @keyframes fadeInSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-enter {
+      animation: fadeInSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-modal {
+      animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  `}</style>
+);
 
-const Card = ({ children, className = "" }) => (
+// --- COMPONENTS ---
+
+const Card = ({ children, className = "" }: any) => (
   <div
     className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden ${className}`}
   >
@@ -67,8 +89,8 @@ const Card = ({ children, className = "" }) => (
   </div>
 );
 
-const Badge = ({ children, color = "blue" }) => {
-  const colors = {
+const Badge = ({ children, color = "blue" }: any) => {
+  const colors: any = {
     blue: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
     green:
       "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800",
@@ -131,8 +153,8 @@ const INITIAL_PROJECTS = [
 ];
 
 export default function LuminaPortal() {
-  const [projects, setProjects] = useState(INITIAL_PROJECTS);
-  const [activeProjectId, setActiveProjectId] = useState(null);
+  const [projects, setProjects] = useState<any[]>(INITIAL_PROJECTS);
+  const [activeProjectId, setActiveProjectId] = useState<any>(null);
   const [viewState, setViewState] = useState("LOCKED");
   const [isAdmin, setIsAdmin] = useState(false);
   const [pin, setPin] = useState("");
@@ -143,8 +165,8 @@ export default function LuminaPortal() {
   const [animateHeader, setAnimateHeader] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
-  const [deleteInvoiceId, setDeleteInvoiceId] = useState(null);
-  const [deleteProjectId, setDeleteProjectId] = useState(null);
+  const [deleteInvoiceId, setDeleteInvoiceId] = useState<any>(null);
+  const [deleteProjectId, setDeleteProjectId] = useState<any>(null);
   const [newInvoice, setNewInvoice] = useState({
     amount: "$0.00",
     desc: "Service Fee",
@@ -155,11 +177,10 @@ export default function LuminaPortal() {
 
   useEffect(() => {
     if (USE_FIREBASE && db) {
-      const unsub = onSnapshot(doc(db, "lumina", "data"), (doc) => {
+      const unsub = onSnapshot(doc(db, "lumina", "data"), (doc: any) => {
         if (doc.exists() && doc.data().projects) {
           setProjects(doc.data().projects);
         } else if (!doc.exists()) {
-          // Create initial doc if missing
           setDoc(doc.ref, { projects: INITIAL_PROJECTS });
         }
       });
@@ -187,7 +208,7 @@ export default function LuminaPortal() {
     }
   }, [projects, isAdmin]);
 
-  const handleClientLogin = (e) => {
+  const handleClientLogin = (e: any) => {
     e.preventDefault();
     const foundProject = projects.find((p) => p.accessPin === pin);
     if (foundProject) {
@@ -201,7 +222,7 @@ export default function LuminaPortal() {
     }
   };
 
-  const handleAdminLogin = async (e) => {
+  const handleAdminLogin = async (e: any) => {
     e.preventDefault();
     setIsSaving(true);
     if (USE_FIREBASE && auth) {
@@ -210,7 +231,7 @@ export default function LuminaPortal() {
         setIsAdmin(true);
         setViewState("ADMIN_DASHBOARD");
         setErrorMsg("");
-      } catch (err) {
+      } catch (err: any) {
         setErrorMsg("Login Failed: " + err.message);
       }
     } else {
@@ -239,23 +260,21 @@ export default function LuminaPortal() {
     }
   };
 
-  const openProjectAsAdmin = (id) => {
+  const openProjectAsAdmin = (id: any) => {
     setActiveProjectId(id);
     setViewState("PROJECT_VIEW");
     setAnimateHeader(true);
   };
 
-  const updateProjectData = (newData) => {
+  // --- STATE UPDATES ---
+  const updateProjectData = (newData: any) => {
     setProjects((prev) =>
       prev.map((p) => (p.id === activeProjectId ? { ...p, ...newData } : p))
     );
   };
-
-  const updateProjectField = (field, value) => {
+  const updateProjectField = (field: string, value: any) =>
     updateProjectData({ [field]: value });
-  };
-
-  const updatePhaseStatus = (index, newStatus) => {
+  const updatePhaseStatus = (index: number, newStatus: string) => {
     const newPhases = [...project.phases];
     newPhases[index].status = newStatus;
     if (newStatus === "active") {
@@ -265,38 +284,31 @@ export default function LuminaPortal() {
     }
     updateProjectData({ phases: newPhases });
   };
-
-  const updatePhaseField = (index, field, value) => {
+  const updatePhaseField = (index: number, field: string, value: any) => {
     const newPhases = [...project.phases];
     newPhases[index][field] = value;
     updateProjectData({ phases: newPhases });
   };
-
-  const addPhase = () => {
+  const addPhase = () =>
     updateProjectData({
       phases: [
         ...project.phases,
         { id: Date.now(), title: "New Phase", status: "pending", date: "TBD" },
       ],
     });
-  };
-
-  const deletePhase = (e, index) => {
+  const deletePhase = (e: any, index: number) => {
     e.stopPropagation();
-    const newPhases = project.phases.filter((_, i) => i !== index);
+    const newPhases = project.phases.filter((_: any, i: number) => i !== index);
     updateProjectData({ phases: newPhases });
   };
-
-  const toggleInvoiceStatus = (id) => {
+  const toggleInvoiceStatus = (id: any) =>
     updateProjectData({
-      invoices: project.invoices.map((inv) =>
+      invoices: project.invoices.map((inv: any) =>
         inv.id === id
           ? { ...inv, status: inv.status === "paid" ? "unpaid" : "paid" }
           : inv
       ),
     });
-  };
-
   const handleAddInvoice = () => {
     const inv = {
       id: Date.now(),
@@ -309,25 +321,23 @@ export default function LuminaPortal() {
     setShowInvoiceModal(false);
     setNewInvoice({ amount: "$0.00", desc: "Service Fee", date: "Due Today" });
   };
-
   const deleteInvoice = () => {
     if (deleteInvoiceId) {
       updateProjectData({
-        invoices: project.invoices.filter((inv) => inv.id !== deleteInvoiceId),
+        invoices: project.invoices.filter(
+          (inv: any) => inv.id !== deleteInvoiceId
+        ),
       });
       setDeleteInvoiceId(null);
     }
   };
-
-  const updateInvoiceField = (id, field, value) => {
+  const updateInvoiceField = (id: any, field: string, value: any) =>
     updateProjectData({
-      invoices: project.invoices.map((inv) =>
+      invoices: project.invoices.map((inv: any) =>
         inv.id === id ? { ...inv, [field]: value } : inv
       ),
     });
-  };
-
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: any) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -346,26 +356,27 @@ export default function LuminaPortal() {
     };
     reader.readAsDataURL(file);
   };
-
-  const deleteAsset = (id) => {
-    updateProjectData({ assets: project.assets.filter((a) => a.id !== id) });
-  };
-
-  const updateAssetField = (id, field, value) => {
+  const deleteAsset = (id: any) =>
     updateProjectData({
-      assets: project.assets.map((a) =>
+      assets: project.assets.filter((a: any) => a.id !== id),
+    });
+  const updateAssetField = (id: any, field: string, value: any) =>
+    updateProjectData({
+      assets: project.assets.map((a: any) =>
         a.id === id ? { ...a, [field]: value } : a
       ),
     });
-  };
+
+  // --- VIEWS ---
 
   if (viewState === "LOCKED") {
     return (
       <div className={isDarkMode ? "dark" : ""}>
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 font-sans transition-colors duration-300">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden relative">
+        <AnimationStyles />
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 font-sans transition-colors duration-500">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden relative animate-enter">
             <div className="p-10 text-center">
-              <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-indigo-200 dark:shadow-none">
+              <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-indigo-200 dark:shadow-none transition-transform duration-500 hover:rotate-12">
                 <Lock size={32} />
               </div>
               <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
@@ -381,7 +392,7 @@ export default function LuminaPortal() {
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
                   placeholder="PIN (e.g. 1234)"
-                  className="w-full text-center text-2xl font-bold tracking-widest text-slate-800 dark:text-white dark:bg-slate-900 py-3 border-b-2 border-slate-200 dark:border-slate-700 focus:border-indigo-600 focus:outline-none transition-colors"
+                  className="w-full text-center text-2xl font-bold tracking-widest text-slate-800 dark:text-white dark:bg-slate-900 py-3 border-b-2 border-slate-200 dark:border-slate-700 focus:border-indigo-600 focus:outline-none transition-all duration-300 focus:scale-105"
                   autoFocus
                 />
                 {errorMsg && (
@@ -391,7 +402,7 @@ export default function LuminaPortal() {
                 )}
                 <button
                   type="submit"
-                  className="w-full bg-slate-900 dark:bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 group"
+                  className="w-full bg-slate-900 dark:bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-indigo-500 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 group"
                 >
                   Access Portal{" "}
                   <ArrowRight
@@ -404,7 +415,7 @@ export default function LuminaPortal() {
             <div className="bg-slate-50 dark:bg-slate-950/50 p-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center px-8">
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="text-slate-400 hover:text-indigo-500 transition-colors"
+                className="text-slate-400 hover:text-indigo-500 transition-colors duration-300 hover:rotate-45"
               >
                 {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
               </button>
@@ -413,7 +424,7 @@ export default function LuminaPortal() {
                   setViewState("ADMIN_LOGIN");
                   setErrorMsg("");
                 }}
-                className="text-xs text-slate-300 hover:text-slate-500 font-medium"
+                className="text-xs text-slate-300 hover:text-slate-500 font-medium transition-colors"
               >
                 Owner Login
               </button>
@@ -427,11 +438,12 @@ export default function LuminaPortal() {
   if (viewState === "ADMIN_LOGIN") {
     return (
       <div className={isDarkMode ? "dark" : ""}>
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 font-sans">
-          <div className="w-full max-w-sm">
+        <AnimationStyles />
+        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 font-sans transition-colors duration-500">
+          <div className="w-full max-w-sm animate-enter">
             <button
               onClick={() => setViewState("LOCKED")}
-              className="text-slate-500 hover:text-white mb-6 flex items-center gap-2 text-sm"
+              className="text-slate-500 hover:text-white mb-6 flex items-center gap-2 text-sm transition-all hover:-translate-x-1"
             >
               <ChevronRight className="rotate-180" size={14} /> Back to Portal
             </button>
@@ -447,21 +459,21 @@ export default function LuminaPortal() {
                   type="email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-lg p-3 text-sm dark:text-white mt-1"
+                  className="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-lg p-3 text-sm dark:text-white mt-1 focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
                   placeholder="admin@lumina.com"
                 />
                 <input
                   type="password"
                   value={adminPass}
                   onChange={(e) => setAdminPass(e.target.value)}
-                  className="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-lg p-3 text-sm dark:text-white mt-1"
+                  className="w-full bg-slate-100 dark:bg-slate-900 border-none rounded-lg p-3 text-sm dark:text-white mt-1 focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
                   placeholder="••••••"
                 />
                 {errorMsg && <p className="text-red-500 text-xs">{errorMsg}</p>}
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
+                  className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all duration-300 active:scale-95"
                 >
                   {isSaving ? "Checking..." : "Login"}
                 </button>
@@ -478,14 +490,16 @@ export default function LuminaPortal() {
       (acc, curr) =>
         acc +
         curr.invoices.reduce(
-          (sum, inv) => sum + parseFloat(inv.amount.replace(/[^0-9.-]+/g, "")),
+          (sum: number, inv: any) =>
+            sum + parseFloat(inv.amount.replace(/[^0-9.-]+/g, "")),
           0
         ),
       0
     );
     return (
       <div className={isDarkMode ? "dark" : ""}>
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 p-6 transition-colors duration-300">
+        <AnimationStyles />
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 p-6 transition-colors duration-500 animate-enter">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -504,49 +518,60 @@ export default function LuminaPortal() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
-                  className="p-2 rounded-full bg-white dark:bg-slate-800 text-slate-500 hover:text-indigo-600 shadow-sm"
+                  className="p-2 rounded-full bg-white dark:bg-slate-800 text-slate-500 hover:text-indigo-600 shadow-sm transition-all hover:scale-110 active:scale-90"
                 >
                   <Sun size={20} />
                 </button>
                 <button
                   onClick={() => setViewState("LOCKED")}
-                  className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-red-500"
+                  className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-red-500 transition-colors"
                 >
                   <LogOut size={16} /> Logout
                 </button>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-2 text-slate-400 text-sm font-bold uppercase tracking-wider">
-                  <Grid size={16} /> Active Projects
+              {/* Stats Cards with Hover Effect */}
+              {[
+                {
+                  title: "Active Projects",
+                  val: projects.length,
+                  icon: Grid,
+                  color: "text-indigo-600",
+                },
+                {
+                  title: "Clients Served",
+                  val: projects.length,
+                  icon: Users,
+                  color: "text-emerald-600",
+                },
+                {
+                  title: "Total Value",
+                  val: `$${totalRevenue.toLocaleString()}`,
+                  icon: DollarSign,
+                  color: "text-slate-800 dark:text-white",
+                },
+              ].map((stat, i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                >
+                  <div className="flex items-center gap-3 mb-2 text-slate-400 text-sm font-bold uppercase tracking-wider">
+                    <stat.icon size={16} /> {stat.title}
+                  </div>
+                  <div
+                    className={`text-4xl font-extrabold ${stat.color} dark:text-white`}
+                  >
+                    {stat.val}
+                  </div>
                 </div>
-                <div className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                  {projects.length}
-                </div>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-2 text-slate-400 text-sm font-bold uppercase tracking-wider">
-                  <Users size={16} /> Clients Served
-                </div>
-                <div className="text-4xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                  {projects.length}
-                </div>
-              </div>
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <div className="flex items-center gap-3 mb-2 text-slate-400 text-sm font-bold uppercase tracking-wider">
-                  <DollarSign size={16} /> Total Value
-                </div>
-                <div className="text-4xl font-extrabold text-slate-800 dark:text-white">
-                  ${totalRevenue.toLocaleString()}
-                </div>
-              </div>
+              ))}
             </div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold">Your Projects</h2>
               <button
                 onClick={handleCreateProject}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all active:scale-95 hover:shadow-md"
               >
                 <Plus size={16} /> New Project
               </button>
@@ -556,21 +581,21 @@ export default function LuminaPortal() {
                 <div
                   key={p.id}
                   onClick={() => openProjectAsAdmin(p.id)}
-                  className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-lg transition-all relative"
+                  className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-lg group-hover:scale-110 transition-transform">
                       {p.clientName.charAt(0)}
                     </div>
                     <Badge
                       color={
-                        p.phases.some((ph) => ph.status === "active")
+                        p.phases.some((ph: any) => ph.status === "active")
                           ? "green"
                           : "slate"
                       }
                     >
-                      {p.phases.find((ph) => ph.status === "active")?.title ||
-                        "Completed"}
+                      {p.phases.find((ph: any) => ph.status === "active")
+                        ?.title || "Completed"}
                     </Badge>
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1 group-hover:text-indigo-600 transition-colors">
@@ -586,7 +611,7 @@ export default function LuminaPortal() {
                         e.stopPropagation();
                         setDeleteProjectId(p.id);
                       }}
-                      className="text-slate-300 hover:text-red-500 p-2"
+                      className="text-slate-300 hover:text-red-500 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -597,10 +622,10 @@ export default function LuminaPortal() {
           </div>
         </div>
         {deleteProjectId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-enter">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-modal">
               <div className="p-6 text-center">
-                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mx-auto mb-4">
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mx-auto mb-4 animate-bounce">
                   <AlertTriangle size={24} />
                 </div>
                 <h3 className="font-bold text-lg dark:text-white mb-2">
@@ -630,11 +655,12 @@ export default function LuminaPortal() {
 
   return (
     <div className={isDarkMode ? "dark" : ""}>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 transition-colors duration-300">
-        <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
+      <AnimationStyles />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 transition-colors duration-500 animate-enter">
+        <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-500">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold transition-transform hover:rotate-6">
                 L
               </div>
               <span className="font-bold text-lg tracking-tight text-slate-800 dark:text-white">
@@ -644,7 +670,7 @@ export default function LuminaPortal() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 transition-colors"
+                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 transition-all hover:scale-110 active:scale-95"
               >
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
@@ -652,7 +678,7 @@ export default function LuminaPortal() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setViewState("ADMIN_DASHBOARD")}
-                    className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
                   >
                     <Grid size={14} /> All Projects
                   </button>
@@ -661,7 +687,7 @@ export default function LuminaPortal() {
                       setIsAdmin(false);
                       setViewState("LOCKED");
                     }}
-                    className="p-2 text-slate-400 hover:text-red-500"
+                    className="p-2 text-slate-400 hover:text-red-500 transition-colors active:scale-95"
                   >
                     <LogOut size={18} />
                   </button>
@@ -672,7 +698,7 @@ export default function LuminaPortal() {
                     setViewState("LOCKED");
                     setPin("");
                   }}
-                  className="text-sm text-slate-500 hover:text-indigo-600 font-medium"
+                  className="text-sm text-slate-500 hover:text-indigo-600 font-medium transition-colors"
                 >
                   Log Out
                 </button>
@@ -682,6 +708,7 @@ export default function LuminaPortal() {
         </nav>
 
         <main className="max-w-5xl mx-auto px-6 py-12 space-y-12">
+          {/* Header */}
           <header
             className={`transition-all duration-700 transform ${
               animateHeader
@@ -698,7 +725,7 @@ export default function LuminaPortal() {
                       onChange={(e) =>
                         updateProjectField("clientName", e.target.value)
                       }
-                      className="text-sm font-bold tracking-widest text-indigo-600 uppercase bg-transparent border-b border-dashed border-indigo-200 hover:border-indigo-500 focus:outline-none focus:border-indigo-600 w-auto dark:text-indigo-400 dark:border-indigo-800"
+                      className="text-sm font-bold tracking-widest text-indigo-600 uppercase bg-transparent border-b border-dashed border-indigo-200 hover:border-indigo-500 focus:outline-none focus:border-indigo-600 w-auto dark:text-indigo-400 dark:border-indigo-800 transition-colors"
                     />
                   ) : (
                     <span className="text-sm font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
@@ -719,7 +746,7 @@ export default function LuminaPortal() {
                       onChange={(e) =>
                         updateProjectField("projectName", e.target.value)
                       }
-                      className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-500 focus:outline-none w-full"
+                      className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-500 focus:outline-none w-full transition-colors"
                     />
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <Lock size={12} /> Client PIN:{" "}
@@ -728,12 +755,12 @@ export default function LuminaPortal() {
                         onChange={(e) =>
                           updateProjectField("accessPin", e.target.value)
                         }
-                        className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300 font-mono w-16 text-center"
+                        className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300 font-mono w-16 text-center focus:ring-1 focus:ring-indigo-500 outline-none"
                       />
                     </div>
                   </div>
                 ) : (
-                  <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white">
+                  <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white transition-colors">
                     {project.projectName}
                   </h1>
                 )}
@@ -747,7 +774,7 @@ export default function LuminaPortal() {
                     {project.freelancerName}
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors">
                   <Briefcase size={18} />
                 </div>
               </div>
@@ -765,11 +792,11 @@ export default function LuminaPortal() {
                 </span>
               )}
             </div>
-            <Card className="p-8 md:p-10">
+            <Card className="p-8 md:p-10 hover:shadow-md transition-shadow duration-300">
               <div className="relative">
                 <div className="hidden md:block absolute top-6 left-0 w-full h-0.5 bg-slate-100 dark:bg-slate-800" />
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
-                  {project.phases.map((phase, idx) => {
+                  {project.phases.map((phase: any, idx: number) => {
                     const isActive = phase.status === "active";
                     const isComplete = phase.status === "complete";
                     return (
@@ -780,7 +807,7 @@ export default function LuminaPortal() {
                         {isAdmin && (
                           <button
                             onClick={(e) => deletePhase(e, idx)}
-                            className="absolute -top-3 right-0 md:right-auto md:left-1/2 md:-translate-x-1/2 md:-top-4 w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] hover:bg-red-500 hover:text-white transition-colors z-30"
+                            className="absolute -top-3 right-0 md:right-auto md:left-1/2 md:-translate-x-1/2 md:-top-4 w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] hover:bg-red-500 hover:text-white transition-all scale-0 group-hover:scale-100 z-30"
                             title="Delete Phase"
                           >
                             <X size={10} strokeWidth={3} />
@@ -790,25 +817,27 @@ export default function LuminaPortal() {
                           onClick={() =>
                             isAdmin && updatePhaseStatus(idx, "active")
                           }
-                          className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-300 z-20 ${
-                            isAdmin ? "cursor-pointer hover:scale-110" : ""
+                          className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-all duration-500 z-20 ${
+                            isAdmin
+                              ? "cursor-pointer hover:scale-110 active:scale-90"
+                              : ""
                           } ${
                             isComplete
                               ? "bg-emerald-500 border-emerald-100 dark:border-emerald-900 text-white"
                               : isActive
-                              ? "bg-indigo-600 border-indigo-100 dark:border-indigo-900 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
+                              ? "bg-indigo-600 border-indigo-100 dark:border-indigo-900 text-white shadow-lg shadow-indigo-200 dark:shadow-none scale-110"
                               : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-300 dark:text-slate-600"
                           }`}
                         >
                           {isComplete ? (
-                            <CheckCircle size={20} />
+                            <CheckCircle size={20} className="animate-enter" />
                           ) : isActive ? (
-                            <Clock size={20} className="animate-pulse" />
+                            <Clock size={20} className="animate-spin-slow" />
                           ) : (
                             <div className="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700" />
                           )}
                         </div>
-                        <div className="flex-1 md:flex-none text-left md:text-center w-full">
+                        <div className="flex-1 md:flex-none text-left md:text-center w-full transition-opacity duration-500">
                           {isAdmin ? (
                             <div className="space-y-1">
                               <input
@@ -816,21 +845,21 @@ export default function LuminaPortal() {
                                 onChange={(e) =>
                                   updatePhaseField(idx, "title", e.target.value)
                                 }
-                                className="text-sm font-semibold bg-transparent text-left md:text-center w-full border-b border-dashed border-transparent hover:border-indigo-300 focus:outline-none"
+                                className="text-sm font-semibold bg-transparent text-left md:text-center w-full border-b border-dashed border-transparent hover:border-indigo-300 focus:outline-none transition-colors"
                               />
                               <input
                                 value={phase.date}
                                 onChange={(e) =>
                                   updatePhaseField(idx, "date", e.target.value)
                                 }
-                                className="text-xs text-slate-500 bg-transparent text-left md:text-center w-full border-b border-dashed border-transparent hover:border-indigo-300 focus:outline-none placeholder-slate-300"
+                                className="text-xs text-slate-500 bg-transparent text-left md:text-center w-full border-b border-dashed border-transparent hover:border-indigo-300 focus:outline-none placeholder-slate-300 transition-colors"
                                 placeholder="Date (Optional)"
                               />
                             </div>
                           ) : (
                             <>
                               <p
-                                className={`text-sm font-semibold ${
+                                className={`text-sm font-semibold transition-colors duration-300 ${
                                   isActive
                                     ? "text-indigo-900 dark:text-indigo-400"
                                     : isComplete
@@ -855,7 +884,7 @@ export default function LuminaPortal() {
                     <div className="flex flex-col items-center justify-start pt-1">
                       <button
                         onClick={addPhase}
-                        className="w-10 h-10 rounded-full border-2 border-dashed border-slate-300 text-slate-400 flex items-center justify-center hover:border-indigo-500 hover:text-indigo-600 transition-colors"
+                        className="w-10 h-10 rounded-full border-2 border-dashed border-slate-300 text-slate-400 flex items-center justify-center hover:border-indigo-500 hover:text-indigo-600 transition-all hover:rotate-90 active:scale-90"
                       >
                         <Plus size={16} />
                       </button>
@@ -885,9 +914,9 @@ export default function LuminaPortal() {
                     />
                     <button
                       onClick={() =>
-                        document.getElementById("hidden-file-input").click()
+                        document.getElementById("hidden-file-input")!.click()
                       }
-                      className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-medium hover:bg-indigo-100 flex items-center gap-1 transition-colors"
+                      className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-medium hover:bg-indigo-100 flex items-center gap-1 transition-all active:scale-95"
                     >
                       <UploadCloud size={12} /> Upload File
                     </button>
@@ -895,10 +924,10 @@ export default function LuminaPortal() {
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {project.assets.map((asset) => (
+                {project.assets.map((asset: any) => (
                   <div
                     key={asset.id}
-                    className="group relative bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all"
+                    className="group relative bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all duration-300 hover:-translate-y-1"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -911,7 +940,7 @@ export default function LuminaPortal() {
                       {isAdmin ? (
                         <button
                           onClick={() => deleteAsset(asset.id)}
-                          className="text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                          className="text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors hover:scale-110"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -926,7 +955,7 @@ export default function LuminaPortal() {
                           onChange={(e) =>
                             updateAssetField(asset.id, "name", e.target.value)
                           }
-                          className="block w-full text-sm font-semibold text-slate-900 dark:text-white bg-transparent border-b border-dashed border-transparent hover:border-slate-300 focus:outline-none placeholder-slate-400"
+                          className="block w-full text-sm font-semibold text-slate-900 dark:text-white bg-transparent border-b border-dashed border-transparent hover:border-slate-300 focus:outline-none placeholder-slate-400 transition-colors"
                         />
                       </div>
                     ) : (
@@ -943,7 +972,7 @@ export default function LuminaPortal() {
                         <a
                           href={asset.url}
                           download={asset.name}
-                          className="inline-flex items-center justify-center w-full py-2 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-xs font-bold rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors gap-2"
+                          className="inline-flex items-center justify-center w-full py-2 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 text-xs font-bold rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-all active:scale-95 gap-2"
                         >
                           <Download size={14} /> Download Asset
                         </a>
@@ -962,14 +991,14 @@ export default function LuminaPortal() {
                 {isAdmin && (
                   <button
                     onClick={() => setShowInvoiceModal(true)}
-                    className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-medium hover:bg-indigo-100 flex items-center gap-1 transition-colors"
+                    className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-medium hover:bg-indigo-100 flex items-center gap-1 transition-all active:scale-95"
                   >
                     <Plus size={12} /> Add Invoice
                   </button>
                 )}
               </div>
               <Card className="divide-y divide-slate-100 dark:divide-slate-800">
-                {project.invoices.map((inv) => (
+                {project.invoices.map((inv: any) => (
                   <div
                     key={inv.id}
                     className="p-5 flex items-center justify-between group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors relative"
@@ -986,7 +1015,7 @@ export default function LuminaPortal() {
                                 e.target.value
                               )
                             }
-                            className="font-bold text-slate-800 dark:text-white bg-transparent border-b border-dashed border-transparent hover:border-slate-300 focus:outline-none w-24"
+                            className="font-bold text-slate-800 dark:text-white bg-transparent border-b border-dashed border-transparent hover:border-slate-300 focus:outline-none w-24 transition-colors"
                           />
                         ) : (
                           <p className="font-bold text-slate-800 dark:text-white">
@@ -996,7 +1025,9 @@ export default function LuminaPortal() {
                         <button
                           onClick={() => isAdmin && toggleInvoiceStatus(inv.id)}
                           className={`${
-                            isAdmin ? "cursor-pointer hover:opacity-80" : ""
+                            isAdmin
+                              ? "cursor-pointer hover:opacity-80 active:scale-95 transition-transform"
+                              : ""
                           }`}
                         >
                           <Badge
@@ -1038,13 +1069,13 @@ export default function LuminaPortal() {
                       {isAdmin && (
                         <button
                           onClick={() => setDeleteInvoiceId(inv.id)}
-                          className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                          className="p-2 text-slate-300 hover:text-red-500 transition-colors hover:bg-slate-100 rounded-full"
                         >
                           <Trash2 size={16} />
                         </button>
                       )}
                       {inv.status === "paid" && !isAdmin && (
-                        <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900 flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-enter">
                           <CheckCircle size={16} />
                         </div>
                       )}
@@ -1056,15 +1087,15 @@ export default function LuminaPortal() {
           </div>
 
           {showInvoiceModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-              <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-enter">
+              <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-modal">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="font-bold text-lg dark:text-white">
                     Add Invoice
                   </h3>
                   <button
                     onClick={() => setShowInvoiceModal(false)}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                   >
                     <X size={20} />
                   </button>
@@ -1079,7 +1110,7 @@ export default function LuminaPortal() {
                       onChange={(e) =>
                         setNewInvoice({ ...newInvoice, amount: e.target.value })
                       }
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm dark:text-white mt-1"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm dark:text-white mt-1 focus:ring-1 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div>
@@ -1091,7 +1122,7 @@ export default function LuminaPortal() {
                       onChange={(e) =>
                         setNewInvoice({ ...newInvoice, desc: e.target.value })
                       }
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm dark:text-white mt-1"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm dark:text-white mt-1 focus:ring-1 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <div>
@@ -1103,12 +1134,12 @@ export default function LuminaPortal() {
                       onChange={(e) =>
                         setNewInvoice({ ...newInvoice, date: e.target.value })
                       }
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm dark:text-white mt-1"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-3 text-sm dark:text-white mt-1 focus:ring-1 focus:ring-indigo-500 transition-all"
                     />
                   </div>
                   <button
                     onClick={handleAddInvoice}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition-colors mt-2"
+                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all active:scale-95 mt-2"
                   >
                     Add Invoice
                   </button>
@@ -1118,10 +1149,10 @@ export default function LuminaPortal() {
           )}
 
           {deleteInvoiceId && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-              <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-enter">
+              <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-modal">
                 <div className="p-6 text-center">
-                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mx-auto mb-4">
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mx-auto mb-4 animate-bounce">
                     <AlertTriangle size={24} />
                   </div>
                   <h3 className="font-bold text-lg dark:text-white mb-2">
