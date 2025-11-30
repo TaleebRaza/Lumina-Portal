@@ -698,9 +698,13 @@ export default function LuminaPortal() {
         <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-500 animate-fade">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold transition-transform hover:rotate-6">
-                L
-              </div>
+              {/* NEW LOGO IMAGE START */}
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAMAAAAL34HQAAAAsVBMVEVHcEwnJycZGRkoKCiPj48MDAwLCwsNDQ0JCQkCAgIMDAx4eHiPj48CAgKKiooDAwODg4MICAgEBAQHBweMjIwKCgoHBwcICAgJCQkMDAwUFBSLi4sGBgYICAiNjY0JCQl0dHQHBwcoKCgWFhZPT09gYGB9fX0JCQkICAiEhIR/f388PDyTk5OYmJhYWFiRkZEAAAABAQGSkpIKCgo1NTUlJSVcXFxsbGx5eXkWFhZJSUkzivf3AAAAL3RSTlMAAwgO/B0yJxT9PuPq9/3u+Gnic69+10tViJKQy17RpCSwoUfE0zmZvnRTtEwOlHS9t2sAAAWVSURBVHja7ZxtV9pMEIZJQoCgGMI7iEWKFZ9WutmoFf3/P+zZTfClNGR2JzubnNPu8SPneJ0rw+SeSbTRsHP8lteo3fGHy8Gq7dQLqj2ecB7zhV8jLqc1H/BYHD6YefWB2g44T7HiYFsTXbvuKow/zmTq1gDK3azCg6j0IvJg4VcO5c3Wn01lujYV6/Ku7nr8mCruzSvV1RFQcc7hVeryo2UQ5x7em3cqa+iTgHOej8WX3Up0yYYeF5ze2L4upz0fnBJ1OMGya7mlOq2FuMsUU4nqGlrV5XS3IYCUVdddy56urKErYYWRLV3edB3CRG9nbUeXNxMNnatjhZGFfHOqoRdcxzV5TJUNXUNUdgZXHnFDl1DaWJw01YuGHugSHXSRpedDQ8dhBUS6soaOPmLYcEkaehkogUUwbKQNPS55TA8bsqHH5Y/ZYUOMDT3ODWCZHDb0G3pBvjE1bKAa+ukgYSY9y4au/DvTH+CYSM+aDZ0/PMAfKqtLt6EHL6/75ydYV6n0rNfQRZZ/+tVPkmT/An60RHpOG7pGoWdQjLHmK/jREKvL6Wo0dJ6aukihGEv2cHkhdbnjUKcjBB9Q8jxSpedWqHj95KeOoFR0cdyw0VW9gjx+OIKS1aWgC5WeO3eKWA+Pz8dQQtezgi5UHIwClY4uoJrHTIrVhRs2/KWSqWaSS6WgK14hdXGkqUN1QVWAGzb8JQdNsZNHQRdu2HCGBdX18rgvghJYF2B1IZ9stCcnoV73rBBKSRdy2HDGHA0lDqiLc9yw0f5jFSpufYpQqS6o6HHDhjM/vv+oQ0ldYO5Crupbv6ctCZWoQgldvwKwulDDhrvlv0H1NaDkl/EJrC5ceu6GaKhUF4ewcMOGu8qq6z146mHB1YUcNjYy3+CgVHRhZzN39TkNE+gKlqg4OH1EQynpwj3ZuL4sASWw+vCXUXvYcK4vv7ASUJkuDg4berpuL89Z2QPr0htlHQmVsPJccHWpz2Y7Q1Di9F/A6lIcNnb3Bi7fu65XuLpUho3d/cgclKwueFECp2fDUJkuMD0DusxDMYW9Ei8eNlKohBnnegWLvuDJBg2Ukq7Tr1EJqCYFVFZd8OSfO2ykUGRHpbq2Oel5RwklD7y1zJvN7ompVHTlzGb354xR64KaV85sthtRY8Fby7zXqL43qbngRUnOsHH9hVFXF7goyRs2/qtcF69CV6KwKKlCV6JQXas/0zN9dQFrODH4b3NCPXl1AY8QgsE6yok31emSzyt7g/X8qp1zu3aq0iWhJuv5rNXJzTZV6ZJQ41NQ1ejKTI1nbc85PdpT62LHujgPJ6tCKCu6Lp4+goQs9HC5Gk6LoWzo+tTqOQ/C5RaGkjs28lb/sYZLoTa+pzLm35LfGdOduDA1uNtGG99VW9U4l8yGLgG1iLq++i7Xhq60oetAieoi19XPeqfm1vuWfNi4iU429Cp1naGebdLr+ol5tmlB1wahy/mLdbl11NVE6fLqqavxnVhXgtPljv7p0qmuv1SX/DI2/ulStlVTXQzX6smr67yeupo/MS8aEOtK2NkC9f7D9YgSqv/t6xXuz2rIduIp1HDq417kJ6quA1Tbw70v7zgUukpC0VSXASjzS14zUIa3lgLqxgSUUV1JU0JtTECZ05U0z24WkeIyy5auNyjX2F8lGtCVQXUNQhlY8iYXB6iG0VNKVyKgfuhu2Kh1HaC0N2ykukihsIuShAmoMRkUTpcw9e1HwcOlSnTJWx81lPZOPL0f00Pp6TpAtTsW/kWG8hrOVHIxqssulKIu61AqurI4ZRUK1iVDgrGMZ0qX6YxnRJf5jGdgyUuR8Uqv4aqGytVVPVSOLqI0XG5RQpaGS+h6i+idOvwzx3ddtGkYqatmUKkuS8FTs9WPzuwET83e1YqGdqD+B/5caHUNveOXAAAAAElFTkSuQmCC"
+                alt="Logo"
+                className="w-8 h-8 rounded-lg object-contain transition-transform hover:rotate-6"
+              />
+              {/* NEW LOGO IMAGE END */}
               <span className="font-bold text-lg tracking-tight text-slate-800 dark:text-white">
                 Lumina
               </span>
