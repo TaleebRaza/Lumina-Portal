@@ -45,7 +45,6 @@ const firebaseConfig = {
   messagingSenderId: "429023395974",
   appId: "1:429023395974:web:2c0c3440af648f9a635107",
 };
-
 // Initialize Firebase
 let app: any, auth: any, db: any;
 
@@ -174,6 +173,15 @@ export default function LuminaPortal() {
   });
 
   const project = projects.find((p) => p.id === activeProjectId) || projects[0];
+
+  // --- DARK MODE SYNC (THE FIX) ---
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     if (USE_FIREBASE && db) {
