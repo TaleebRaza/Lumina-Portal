@@ -45,7 +45,6 @@ const firebaseConfig = {
   messagingSenderId: "429023395974",
   appId: "1:429023395974:web:2c0c3440af648f9a635107",
 };
-
 // Initialize Firebase
 let app: any, auth: any, db: any;
 
@@ -59,23 +58,30 @@ try {
   console.warn("Firebase init warning:", e);
 }
 
-// --- ANIMATION STYLES ---
+// --- ANIMATION STYLES (PHYSICS & SMOOTHNESS) ---
 const AnimationStyles = () => (
   <style>{`
-    @keyframes fadeInSlideUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes springUp {
+      0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
-    .animate-enter {
-      animation: fadeInSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .animate-spring {
+      animation: springUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0; /* Start hidden to prevent flash */
     }
-    .animate-modal {
-      animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .animate-fade {
+      animation: fadeIn 0.4s ease-out forwards;
     }
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    
+    /* Smooth transitions for all layout changes */
+    * { transition-property: background-color, border-color, color, transform, opacity; transition-duration: 300ms; }
   `}</style>
 );
 
@@ -175,17 +181,13 @@ export default function LuminaPortal() {
 
   const project = projects.find((p) => p.id === activeProjectId) || projects[0];
 
-  // --- DARK MODE CONFIG (FAILSAFE) ---
+  // --- DARK MODE CONFIG ---
   useEffect(() => {
-    // Force Tailwind to respect manual class mode if config is missing
     if ((window as any).tailwind) {
-      (window as any).tailwind.config = {
-        darkMode: "class",
-      };
+      (window as any).tailwind.config = { darkMode: "class" };
     }
   }, []);
 
-  // --- DARK MODE SYNC ---
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -194,6 +196,7 @@ export default function LuminaPortal() {
     }
   }, [isDarkMode]);
 
+  // --- FIREBASE SYNC ---
   useEffect(() => {
     if (USE_FIREBASE && db) {
       const unsub = onSnapshot(doc(db, "lumina", "data"), (doc: any) => {
@@ -226,6 +229,8 @@ export default function LuminaPortal() {
       return () => clearTimeout(timeout);
     }
   }, [projects, isAdmin]);
+
+  // --- HANDLERS ---
 
   const handleClientLogin = (e: any) => {
     e.preventDefault();
@@ -260,7 +265,7 @@ export default function LuminaPortal() {
           setViewState("ADMIN_DASHBOARD");
           setErrorMsg("");
         } else {
-          setErrorMsg("Invalid Credentials (Try pass: admin)");
+          setErrorMsg("Invalid Credentials");
         }
       }, 800);
     }
@@ -285,7 +290,7 @@ export default function LuminaPortal() {
     setAnimateHeader(true);
   };
 
-  // --- STATE UPDATES ---
+  // --- DATA UPDATES ---
   const updateProjectData = (newData: any) => {
     setProjects((prev) =>
       prev.map((p) => (p.id === activeProjectId ? { ...p, ...newData } : p))
@@ -293,6 +298,7 @@ export default function LuminaPortal() {
   };
   const updateProjectField = (field: string, value: any) =>
     updateProjectData({ [field]: value });
+
   const updatePhaseStatus = (index: number, newStatus: string) => {
     const newPhases = [...project.phases];
     newPhases[index].status = newStatus;
@@ -303,6 +309,16 @@ export default function LuminaPortal() {
     }
     updateProjectData({ phases: newPhases });
   };
+
+  // NEW: Mark final phase complete if all previous are done
+  const markHandoverComplete = (index: number) => {
+    const newPhases = [...project.phases];
+    // Set all previous to complete just in case
+    for (let i = 0; i < index; i++) newPhases[i].status = "complete";
+    newPhases[index].status = "complete";
+    updateProjectData({ phases: newPhases });
+  };
+
   const updatePhaseField = (index: number, field: string, value: any) => {
     const newPhases = [...project.phases];
     newPhases[index][field] = value;
@@ -393,7 +409,7 @@ export default function LuminaPortal() {
       <div className={isDarkMode ? "dark" : ""}>
         <AnimationStyles />
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 font-sans transition-colors duration-500">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden relative animate-enter">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden relative animate-spring">
             <div className="p-10 text-center">
               <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-indigo-200 dark:shadow-none transition-transform duration-500 hover:rotate-12">
                 <Lock size={32} />
@@ -459,7 +475,7 @@ export default function LuminaPortal() {
       <div className={isDarkMode ? "dark" : ""}>
         <AnimationStyles />
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 font-sans transition-colors duration-500">
-          <div className="w-full max-w-sm animate-enter">
+          <div className="w-full max-w-sm animate-spring">
             <button
               onClick={() => setViewState("LOCKED")}
               className="text-slate-500 hover:text-white mb-6 flex items-center gap-2 text-sm transition-all hover:-translate-x-1"
@@ -518,8 +534,8 @@ export default function LuminaPortal() {
     return (
       <div className={isDarkMode ? "dark" : ""}>
         <AnimationStyles />
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 p-6 transition-colors duration-500 animate-enter">
-          <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 p-6 transition-colors duration-500">
+          <div className="max-w-6xl mx-auto animate-spring">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -550,7 +566,7 @@ export default function LuminaPortal() {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-              {/* Stats Cards with Hover Effect */}
+              {/* Stats Cards with Staggered Physics */}
               {[
                 {
                   title: "Active Projects",
@@ -573,7 +589,9 @@ export default function LuminaPortal() {
               ].map((stat, i) => (
                 <div
                   key={i}
-                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                  className={`bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 animate-spring stagger-${
+                    i + 1
+                  }`}
                 >
                   <div className="flex items-center gap-3 mb-2 text-slate-400 text-sm font-bold uppercase tracking-wider">
                     <stat.icon size={16} /> {stat.title}
@@ -586,7 +604,7 @@ export default function LuminaPortal() {
                 </div>
               ))}
             </div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 animate-spring stagger-2">
               <h2 className="text-lg font-bold">Your Projects</h2>
               <button
                 onClick={handleCreateProject}
@@ -595,7 +613,7 @@ export default function LuminaPortal() {
                 <Plus size={16} /> New Project
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-spring stagger-3">
               {projects.map((p) => (
                 <div
                   key={p.id}
@@ -641,8 +659,8 @@ export default function LuminaPortal() {
           </div>
         </div>
         {deleteProjectId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-enter">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-modal">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fade">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-spring">
               <div className="p-6 text-center">
                 <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mx-auto mb-4 animate-bounce">
                   <AlertTriangle size={24} />
@@ -675,8 +693,8 @@ export default function LuminaPortal() {
   return (
     <div className={isDarkMode ? "dark" : ""}>
       <AnimationStyles />
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 transition-colors duration-500 animate-enter">
-        <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-500">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-20 transition-colors duration-500">
+        <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-500 animate-fade">
           <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold transition-transform hover:rotate-6">
@@ -733,7 +751,7 @@ export default function LuminaPortal() {
               animateHeader
                 ? "translate-y-0 opacity-100"
                 : "translate-y-4 opacity-0"
-            }`}
+            } animate-spring stagger-1`}
           >
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
               <div>
@@ -810,7 +828,7 @@ export default function LuminaPortal() {
             </div>
           </header>
 
-          <section>
+          <section className="animate-spring stagger-2">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-slate-800 dark:text-white">
                 Project Status
@@ -828,6 +846,12 @@ export default function LuminaPortal() {
                   {project.phases.map((phase: any, idx: number) => {
                     const isActive = phase.status === "active";
                     const isComplete = phase.status === "complete";
+                    const isLast = idx === project.phases.length - 1;
+                    const prevIsComplete =
+                      idx > 0
+                        ? project.phases[idx - 1].status === "complete"
+                        : true;
+
                     return (
                       <div
                         key={phase.id}
@@ -842,6 +866,7 @@ export default function LuminaPortal() {
                             <X size={10} strokeWidth={3} />
                           </button>
                         )}
+
                         <div
                           onClick={() =>
                             isAdmin && updatePhaseStatus(idx, "active")
@@ -859,13 +884,14 @@ export default function LuminaPortal() {
                           }`}
                         >
                           {isComplete ? (
-                            <CheckCircle size={20} className="animate-enter" />
+                            <CheckCircle size={20} className="animate-fade" />
                           ) : isActive ? (
                             <Clock size={20} className="animate-spin-slow" />
                           ) : (
                             <div className="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700" />
                           )}
                         </div>
+
                         <div className="flex-1 md:flex-none text-left md:text-center w-full transition-opacity duration-500">
                           {isAdmin ? (
                             <div className="space-y-1">
@@ -905,6 +931,27 @@ export default function LuminaPortal() {
                               )}
                             </>
                           )}
+
+                          {/* Handover Checkmark (Only for Last Bubble) */}
+                          {isLast && isAdmin && (
+                            <button
+                              disabled={!prevIsComplete}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markHandoverComplete(idx);
+                              }}
+                              className={`mx-auto mt-2 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 ${
+                                isComplete
+                                  ? "bg-emerald-500 text-white"
+                                  : prevIsComplete
+                                  ? "bg-slate-200 text-slate-400 hover:bg-emerald-500 hover:text-white hover:scale-110 cursor-pointer"
+                                  : "bg-slate-100 text-slate-300 opacity-50 cursor-not-allowed"
+                              }`}
+                              title="Mark Project Complete"
+                            >
+                              <Check size={12} strokeWidth={3} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -927,7 +974,7 @@ export default function LuminaPortal() {
             </Card>
           </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-spring stagger-3">
             <div className="lg:col-span-2 space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -1104,7 +1151,7 @@ export default function LuminaPortal() {
                         </button>
                       )}
                       {inv.status === "paid" && !isAdmin && (
-                        <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900 flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-enter">
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900 flex items-center justify-center text-emerald-600 dark:text-emerald-400 animate-fade">
                           <CheckCircle size={16} />
                         </div>
                       )}
@@ -1116,8 +1163,8 @@ export default function LuminaPortal() {
           </div>
 
           {showInvoiceModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-enter">
-              <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-modal">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fade">
+              <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-spring">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="font-bold text-lg dark:text-white">
                     Add Invoice
@@ -1178,8 +1225,8 @@ export default function LuminaPortal() {
           )}
 
           {deleteInvoiceId && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-enter">
-              <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-modal">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fade">
+              <div className="bg-white dark:bg-slate-900 w-full max-w-xs rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-spring">
                 <div className="p-6 text-center">
                   <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 dark:text-red-400 mx-auto mb-4 animate-bounce">
                     <AlertTriangle size={24} />
