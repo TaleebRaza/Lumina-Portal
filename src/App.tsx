@@ -45,6 +45,7 @@ const firebaseConfig = {
   messagingSenderId: "429023395974",
   appId: "1:429023395974:web:2c0c3440af648f9a635107",
 };
+
 // Initialize Firebase
 let app: any, auth: any, db: any;
 
@@ -174,7 +175,17 @@ export default function LuminaPortal() {
 
   const project = projects.find((p) => p.id === activeProjectId) || projects[0];
 
-  // --- DARK MODE SYNC (THE FIX) ---
+  // --- DARK MODE CONFIG (FAILSAFE) ---
+  useEffect(() => {
+    // Force Tailwind to respect manual class mode if config is missing
+    if ((window as any).tailwind) {
+      (window as any).tailwind.config = {
+        darkMode: "class",
+      };
+    }
+  }, []);
+
+  // --- DARK MODE SYNC ---
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -778,9 +789,19 @@ export default function LuminaPortal() {
                   <p className="text-xs text-slate-400 uppercase font-semibold">
                     Managed By
                   </p>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {project.freelancerName}
-                  </p>
+                  {isAdmin ? (
+                    <input
+                      value={project.freelancerName}
+                      onChange={(e) =>
+                        updateProjectField("freelancerName", e.target.value)
+                      }
+                      className="text-sm font-medium text-slate-700 dark:text-slate-300 bg-transparent text-right border-b border-dashed border-indigo-200 hover:border-indigo-500 focus:outline-none focus:border-indigo-600 transition-colors"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {project.freelancerName}
+                    </p>
+                  )}
                 </div>
                 <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 transition-colors">
                   <Briefcase size={18} />
